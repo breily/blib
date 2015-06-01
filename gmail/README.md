@@ -1,0 +1,191 @@
+gmail.py - interact with Gmail through python
+=============================================
+
+* gmail.py wraps imaplib and smtplib to make it easier to interact with
+  your Gmail account through python.
+* somewhat outdated, not updated since 2009 so google may have changed api.
+
+Examples:
+---------
+
+
+Login (this automatically connects to IMAP and SMTP) and then out:
+
+    > import gmail
+    > conn = gmail.Gmail('username', 'password')
+    > # do stuff...
+    > conn.logout()
+
+Interact with labels:
+
+    > conn.labels.switch('sent')
+    1567 # Number of emails in that label
+    > conn.labels.create('mylabel')
+    > conn.labels.delete('mylabel')
+    > conn.labels.exists('foo')
+    False
+    > len(conn.labels.all())
+    25
+
+Search email:
+
+    > # Chainable queries
+    > conn.search.subject('foo').to('alternate@gmail.com')
+    > conn.search.unread()
+    > msgs = conn.search.all()
+    > # msgs will be unread emails sent to 'alternate@gmail.com'
+    > # with 'foo' in the subject
+
+Download email:
+
+    > msgs = conn.search.unread().all()
+    > msgs
+    [<gmail.Message object...]
+    > msgs[0].subject()
+    'V1agra for Sale! #1 ONLINE PHARMACY!'
+    > msgs = conn.all()
+
+Send email:
+
+    > msg = gmail.Message().fill('you@gmail.com', 'me@gmail.com',
+    ... 'fwd: fwd: funny', 'pictures of cats')
+    > msg.to_addresses()
+    ['you@gmail.com']
+    > msg.subject()
+    'fwd: fwd: funny'
+    > conn.send(msg)
+
+Notes:
+------
+
+* Messages are not downloaded when they are created.  They store their id
+  and a reference to your IMAP connection.  When you first try to read
+  anything from them, they download.
+
+* Basically zero error handling is done right now.
+
+* API (no return unless indicated):
+
+    Gmail.__init__(username, password)
+    - Connect and login to Gmail.
+    - The current label is set to the inbox.
+    - Returns a Gmail object.
+
+    Gmail.logout(close_imap=True, close_smtp=True)
+    - Close connections.
+
+    Gmail.fetch(id)
+    - Return a Message object for a given id.
+
+    Gmail.send(message)
+    - Send a Message object.
+
+    Gmail.search.clear()
+    - Clear the current query.
+
+    Gmail.search.first()
+    - Returns the first Message result for the current query.
+
+    Gmail.search.all()
+    - If a query is in progress, returns a list of result Messages.
+    - Otherwise returns a list of all Messages for the current Label.
+
+    Gmail.search.count()
+    - Returns the number of results for the current query.
+
+    Gmail.search.unread()
+    Gmail.search.read()
+    Gmail.search.to(query)
+    Gmail.search.from_(query)
+    Gmail.search.subject(query)
+    Gmail.search.bcc(query)
+    Gmail.search.cc(query)
+    Gmail.search.body(query)
+    Gmail.search.since(date)
+    Gmail.search.before(date)
+    Gmail.search.on(date)
+    - Builds the current query.
+    - Returns the Search chainable.
+
+    Gmail.labels.exists(label)
+    - Return True or False if the label exists.
+
+    Gmail.labels.switch(label)
+    - Change the current label.
+    - This clears the current search.
+
+    Gmail.labels.create(label)
+    - Create a label.
+
+    Gmail.labels.delete(label)
+    - Delete a label.
+
+    Gmail.labels.rename(old, new)
+    - Rename a label.
+
+    Gmail.labels.all()
+    - Return a list of current labels.
+
+    Gmail.labels.current
+    - The current label.
+
+    Gmail.labels.count
+    - The number of messages in the current label.
+
+    Message.__init__(options)
+    - Options are used internally.
+    - If you are creating a message to send, don't fill in any options.
+    - Instead, do '> msg = Message().fill(your content)'.
+
+    Message.fill(to_addresses='', from_address='', subject='', body='')
+    - Create a message to send.
+    - Returns itself.
+
+    Message.fetch()
+    - Downloads the content of a message from the server.
+    - Returns itself.
+
+    Message.from_address(address)
+    - If 'address' is omitted, returns the current from address.
+    - Otherwise sets the from address.
+
+    Message.to_address(address)
+    - If 'address' is omitted, returns the current list of to addresses.
+    - Otherwise sets the to addresses.
+    - 'address' can be a string or list.
+
+    Message.subject(subject)
+    - If 'subject' is omitted, returns the current subject.
+    - Otherwise sets the subject.
+
+    Message.body(body)
+    - If 'body' is omitted, returns the current message body.
+    - Otherwise sets the message body.
+
+    Message.read()
+    Message.unread()
+    - Mark a message as read/unread.
+
+    Message.delete()
+    - Delete a message from the current label.
+
+    Message.archive()
+    - Archive a message.
+
+    Message.star()
+    Message.unstar()
+    - Star/Unstar a message.
+
+    Message.spam()
+    - Mark a message as spam.
+
+    Message.flag(flag)
+    Message.unflag(flag)
+    - Typically internal commands, add/remove a flag for a message.
+
+    Message.add_label(label)
+    - Add a label to the message.
+
+    Message.move_to(label)
+    - Move a message to a new label.
+
